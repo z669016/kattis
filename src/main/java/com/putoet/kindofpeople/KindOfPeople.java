@@ -1,16 +1,20 @@
 package com.putoet.kindofpeople;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class KindOfPeople {
     public static void main(String[] args) {
         final Input input = InputFactory.get(System.in);
 
-        for (int queryId = 0; queryId < input.queries.length; queryId++) {
-            if (Search.binary(input, queryId))
+        for (Query query : input.queries) {
+            if (Search.binary(input, query))
                 System.out.println("binary");
-            else if (Search.decimal(input, queryId))
+            else if (Search.decimal(input, query))
                 System.out.println("decimal");
             else
                 System.out.println("neither");
@@ -33,6 +37,10 @@ class Point {
         this.row = row;
         this.column = column;
     }
+
+    int manhattanDistance(Point to) {
+        return Math.abs(row - to.row) + Math.abs(column - to.column);
+    }
 }
 
 class Query {
@@ -51,15 +59,19 @@ class Query {
         this.from = from;
         this.to = to;
     }
+
+    Query reverse() {
+        return new Query(to, from);
+    }
 }
 
 class Input {
-    public final int[] grid;
+    public final char[][] grid;
     public final int rows;
     public final int columns;
     public final Query[] queries;
 
-    Input(int[] grid, int rows, int columns, Query[] queries) {
+    Input(char[][] grid, int rows, int columns, Query[] queries) {
         this.grid = grid;
         this.rows = rows;
         this.columns = columns;
@@ -67,17 +79,59 @@ class Input {
     }
 }
 
+class FastReader {
+    final BufferedReader br;
+    StringTokenizer st;
+
+    public FastReader(InputStream is) {
+        br = new BufferedReader(new InputStreamReader(is));
+    }
+
+    String next() {
+        while (st == null || !st.hasMoreElements()) {
+            try {
+                st = new StringTokenizer(br.readLine());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return st.nextToken();
+    }
+
+    int nextInt() {
+        return Integer.parseInt(next());
+    }
+
+    long nextLong() {
+        return Long.parseLong(next());
+    }
+
+    double nextDouble() {
+        return Double.parseDouble(next());
+    }
+
+    String nextLine() {
+        String str = "";
+        try {
+            str = br.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return str;
+    }
+}
+
 class InputFactory {
     static Input get(InputStream in) {
-        final Scanner scanner = new Scanner(in);
+        final FastReader scanner = new FastReader(in);
         final int rows = scanner.nextInt();
         final int columns = scanner.nextInt();
-        final int[] grid = new int[rows * columns];
+        final char[][] grid = new char[rows][];
 
         for (int r = 0; r < rows; r++) {
             final String line = scanner.next();
             for (int c = 0; c < columns; c++) {
-                grid[r * columns + c] = line.charAt(c) - '0';
+                grid[r] = line.toCharArray();
             }
         }
 
@@ -96,31 +150,45 @@ class InputFactory {
 }
 
 class Search {
-    static boolean binary(Input input, int queryId) {
-        return canNavigate(input, queryId, 0);
+    static boolean binary(Input input, Query query) {
+        if (input.grid[query.from.row][query.from.column] != input.grid[query.to.row][query.to.column] ||
+            input.grid[query.to.row][query.to.column] != '0') {
+            return false;
+        }
+
+        return Stream.of(query, query.reverse())
+                .parallel()
+                .map(q -> canNavigate(input, q, '0'))
+                .findFirst()
+                .orElseThrow();
     }
 
-    static boolean decimal(Input input, int queryId) {
-        return canNavigate(input, queryId, 1);
+    static boolean decimal(Input input, Query query) {
+        if (input.grid[query.from.row][query.from.column] != input.grid[query.to.row][query.to.column] ||
+            input.grid[query.to.row][query.to.column] != '1') {
+            return false;
+        }
+
+        return Stream.of(query, query.reverse())
+                .parallel()
+                .map(q -> canNavigate(input, q, '1'))
+                .findFirst()
+                .orElseThrow();
     }
 
-    static boolean canNavigate(Input input, int queryId, int people) {
-        final int[] grid = input.grid;
-        final Query query = input.queries[queryId];
+    static boolean canNavigate(Input input, Query query, char people) {
+        final char[][] grid = input.grid;
         final Point init = query.from;
         final Point to = query.to;
         final int rows = input.rows;
         final int columns = input.columns;
 
-        if (grid[init.row * columns + init.column] != grid[to.row * columns + to.column] ||
-            grid[to.row * columns + to.column] != people) {
-            return false;
-        }
+        final boolean[][] visited = new boolean[rows][columns];
+        visited[init.row][init.column] = true;
 
-        final boolean[] visited = new boolean[grid.length];
-        visited[init.row * columns + init.column] = true;
-        final Queue<Point> queue = new PriorityQueue<>(Comparator.comparing(p -> manhattanDistance(p, to)));
+        final Queue<Point> queue = new PriorityQueue<>(Comparator.comparing(p -> p.manhattanDistance(p)));
         queue.offer(init);
+
         while (!queue.isEmpty()) {
             final Point current = queue.poll();
             if (current.row == to.row && current.column == to.column)
@@ -128,45 +196,49 @@ class Search {
 
             if (current.row > 0) {
                 final Point n = new Point(current.row - 1, current.column);
-                final int index = n.row * columns + n.column;
-                if (grid[index] == people && !visited[index]) {
-                    visited[index] = true;
+                if (n.row == to.row && n.column == to.column)
+                    return true;
+
+                if (grid[n.row][n.column] == people && !visited[n.row][n.column]) {
+                    visited[n.row][n.column] = true;
                     queue.offer(n);
                 }
             }
 
             if (current.row < rows - 1) {
                 final Point n = new Point(current.row + 1, current.column);
-                final int index = n.row * columns + n.column;
-                if (grid[index] == people && !visited[index]) {
-                    visited[index] = true;
+                if (n.row == to.row && n.column == to.column)
+                    return true;
+
+                if (grid[n.row][n.column] == people && !visited[n.row][n.column]) {
+                    visited[n.row][n.column] = true;
                     queue.offer(n);
                 }
             }
 
             if (current.column > 0) {
                 final Point n = new Point(current.row, current.column - 1);
-                final int index = n.row * columns + n.column;
-                if (grid[index] == people && !visited[index]) {
-                    visited[index] = true;
+                if (n.row == to.row && n.column == to.column)
+                    return true;
+
+                if (grid[n.row][n.column] == people && !visited[n.row][n.column]) {
+                    visited[n.row][n.column] = true;
                     queue.offer(n);
                 }
             }
 
             if (current.column < columns - 1) {
                 final Point n = new Point(current.row, current.column + 1);
-                final int index = n.row * columns + n.column;
-                if (grid[index] == people && !visited[index]) {
-                    visited[index] = true;
+                if (n.row == to.row && n.column == to.column)
+                    return true;
+
+                if (grid[n.row][n.column] == people && !visited[n.row][n.column]) {
+                    visited[n.row][n.column] = true;
                     queue.offer(n);
                 }
             }
         }
 
         return false;
-    }
-
-    static int manhattanDistance(Point from, Point to) {
-        return Math.abs(from.row - to.row) + Math.abs(from.column - to.column);
     }
 }
