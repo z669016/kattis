@@ -1,5 +1,8 @@
-package com.putoet.kindofpeople;
+package com.putoet.kattis;
 
+import com.putoet.kattis.ColorSearch;
+import com.putoet.kattis.Input;
+import com.putoet.kattis.InputFactory;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;

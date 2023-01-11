@@ -1,4 +1,4 @@
-package com.putoet.helloworld;
+package com.putoet.kattis;
 
 public class Hello {
     public static void main(String[] args) {
