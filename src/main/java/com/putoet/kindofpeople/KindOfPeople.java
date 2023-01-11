@@ -5,16 +5,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class KindOfPeople {
     public static void main(String[] args) {
         final Input input = InputFactory.get(System.in);
+        final ColorSearch search = new ColorSearch(input);
 
         for (Query query : input.queries) {
-            if (Search.binary(input, query))
+            if (search.binary(input, query))
                 System.out.println("binary");
-            else if (Search.decimal(input, query))
+            else if (search.decimal(input, query))
                 System.out.println("decimal");
             else
                 System.out.println("neither");
@@ -37,10 +37,6 @@ class Point {
         this.row = row;
         this.column = column;
     }
-
-    int manhattanDistance(Point to) {
-        return Math.abs(row - to.row) + Math.abs(column - to.column);
-    }
 }
 
 class Query {
@@ -58,10 +54,6 @@ class Query {
     Query(Point from, Point to) {
         this.from = from;
         this.to = to;
-    }
-
-    Query reverse() {
-        return new Query(to, from);
     }
 }
 
@@ -149,96 +141,67 @@ class InputFactory {
     }
 }
 
-class Search {
-    static boolean binary(Input input, Query query) {
-        if (input.grid[query.from.row][query.from.column] != input.grid[query.to.row][query.to.column] ||
-            input.grid[query.to.row][query.to.column] != '0') {
-            return false;
-        }
+class ColorSearch {
+    private final int[][] colors;
 
-        return Stream.of(query, query.reverse())
-                .parallel()
-                .map(q -> canNavigate(input, q, '0'))
-                .findFirst()
-                .orElseThrow();
+    public ColorSearch(Input input) {
+        this.colors = ColorSearch.colorGrid(input);
     }
 
-    static boolean decimal(Input input, Query query) {
-        if (input.grid[query.from.row][query.from.column] != input.grid[query.to.row][query.to.column] ||
-            input.grid[query.to.row][query.to.column] != '1') {
-            return false;
+    private static int[][] colorGrid(Input input) {
+        final int[][] colors = new int[input.rows][input.columns];
+        final int UNCOLORED = 0;
+        int color = 1;
+
+        for (int y = 0; y < input.rows; y++) {
+            for (int x = 0; x < input.columns; x++) {
+                if (input.grid[y][x] == '0' || input.grid[y][x] == '1') {
+                    final char people = input.grid[y][x];
+
+                    final Deque<Point> queue = new ArrayDeque<>();
+                    queue.offer(new Point(y, x));
+                    while (!queue.isEmpty()) {
+                        final Point current = queue.poll();
+                        if (colors[current.row][current.column] == UNCOLORED &&
+                            input.grid[current.row][current.column] == people) {
+
+                            colors[current.row][current.column] = color;
+
+                            if (current.row > 0)
+                                queue.offer(new Point(current.row - 1, current.column));
+                            if (current.row < input.rows - 1)
+                                queue.offer(new Point(current.row + 1, current.column));
+                            if (current.column > 0)
+                                queue.offer(new Point(current.row, current.column - 1));
+                            if (current.column < input.columns - 1)
+                                queue.offer(new Point(current.row, current.column + 1));
+                        }
+                    }
+                    color++;
+                }
+            }
         }
 
-        return Stream.of(query, query.reverse())
-                .parallel()
-                .map(q -> canNavigate(input, q, '1'))
-                .findFirst()
-                .orElseThrow();
+        return colors;
     }
 
-    static boolean canNavigate(Input input, Query query, char people) {
-        final char[][] grid = input.grid;
-        final Point init = query.from;
+    public boolean binary(Input input, Query query) {
+        return canNavigate(input, query, '0');
+    }
+
+
+    public boolean decimal(Input input, Query query) {
+        return canNavigate(input, query, '1');
+    }
+
+    private boolean canNavigate(Input input, Query query, char people) {
+        final Point from = query.from;
         final Point to = query.to;
-        final int rows = input.rows;
-        final int columns = input.columns;
 
-        final boolean[][] visited = new boolean[rows][columns];
-        visited[init.row][init.column] = true;
+        if (input.grid[from.row][from.column] != input.grid[to.row][to.column] ||
+            input.grid[to.row][to.column] != people)
+            return false;
 
-        final Queue<Point> queue = new PriorityQueue<>(Comparator.comparing(p -> p.manhattanDistance(p)));
-        queue.offer(init);
-
-        while (!queue.isEmpty()) {
-            final Point current = queue.poll();
-            if (current.row == to.row && current.column == to.column)
-                return true;
-
-            if (current.row > 0) {
-                final Point n = new Point(current.row - 1, current.column);
-                if (n.row == to.row && n.column == to.column)
-                    return true;
-
-                if (grid[n.row][n.column] == people && !visited[n.row][n.column]) {
-                    visited[n.row][n.column] = true;
-                    queue.offer(n);
-                }
-            }
-
-            if (current.row < rows - 1) {
-                final Point n = new Point(current.row + 1, current.column);
-                if (n.row == to.row && n.column == to.column)
-                    return true;
-
-                if (grid[n.row][n.column] == people && !visited[n.row][n.column]) {
-                    visited[n.row][n.column] = true;
-                    queue.offer(n);
-                }
-            }
-
-            if (current.column > 0) {
-                final Point n = new Point(current.row, current.column - 1);
-                if (n.row == to.row && n.column == to.column)
-                    return true;
-
-                if (grid[n.row][n.column] == people && !visited[n.row][n.column]) {
-                    visited[n.row][n.column] = true;
-                    queue.offer(n);
-                }
-            }
-
-            if (current.column < columns - 1) {
-                final Point n = new Point(current.row, current.column + 1);
-                if (n.row == to.row && n.column == to.column)
-                    return true;
-
-                if (grid[n.row][n.column] == people && !visited[n.row][n.column]) {
-                    visited[n.row][n.column] = true;
-                    queue.offer(n);
-                }
-            }
-        }
-
-        return false;
+        return colors[from.row][from.column] == colors[to.row][to.column];
     }
 }

@@ -17,25 +17,27 @@ class KindOfPeopleTest {
     }
 
     @Test
-    void searchOne() {
+    void colorSearchOne() {
         final Input input = InputFactory.get(in("/kindofpeople-1.txt"));
+        final ColorSearch search = new ColorSearch(input);
 
-        assertFalse(Search.binary(input, input.queries[0]));
-        assertFalse(Search.decimal(input, input.queries[0]));
-        assertFalse(Search.binary(input, input.queries[1]));
-        assertTrue(Search.decimal(input, input.queries[1]));
+        assertFalse(search.binary(input, input.queries[0]));
+        assertFalse(search.decimal(input, input.queries[0]));
+        assertFalse(search.binary(input, input.queries[1]));
+        assertTrue(search.decimal(input, input.queries[1]));
     }
 
     @Test
-    void searchTwo() {
+    void colorSearchTwo() {
         final Input input = InputFactory.get(in("/kindofpeople-2.txt"));
+        final ColorSearch search = new ColorSearch(input);
 
-        assertTrue(Search.binary(input, input.queries[0]));
-        assertFalse(Search.decimal(input, input.queries[0]));
-        assertFalse(Search.binary(input, input.queries[1]));
-        assertTrue(Search.decimal(input, input.queries[1]));
-        assertFalse(Search.binary(input, input.queries[2]));
-        assertFalse(Search.decimal(input, input.queries[2]));
+        assertTrue(search.binary(input, input.queries[0]));
+        assertFalse(search.decimal(input, input.queries[0]));
+        assertFalse(search.binary(input, input.queries[1]));
+        assertTrue(search.decimal(input, input.queries[1]));
+        assertFalse(search.binary(input, input.queries[2]));
+        assertFalse(search.decimal(input, input.queries[2]));
     }
 
     InputStream in(String resourceName) {
