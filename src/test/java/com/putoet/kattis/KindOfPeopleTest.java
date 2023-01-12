@@ -1,8 +1,5 @@
 package com.putoet.kattis;
 
-import com.putoet.kattis.ColorSearch;
-import com.putoet.kattis.Input;
-import com.putoet.kattis.InputFactory;
 import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
@@ -12,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class KindOfPeopleTest {
     @Test
     void get1() {
-        final Input input = InputFactory.get(in("/kindofpeople-1.txt"));
+        final KindOfPeople.Input input = KindOfPeople.InputFactory.get(in("/kindofpeople-1.txt"));
         assertEquals(1, input.rows);
         assertEquals(4, input.columns);
         assertEquals(2, input.queries.length);
@@ -21,8 +18,8 @@ class KindOfPeopleTest {
 
     @Test
     void colorSearchOne() {
-        final Input input = InputFactory.get(in("/kindofpeople-1.txt"));
-        final ColorSearch search = new ColorSearch(input);
+        final KindOfPeople.Input input = KindOfPeople.InputFactory.get(in("/kindofpeople-1.txt"));
+        final KindOfPeople.ColorSearch search = new KindOfPeople.ColorSearch(input);
 
         assertFalse(search.binary(input, input.queries[0]));
         assertFalse(search.decimal(input, input.queries[0]));
@@ -32,8 +29,8 @@ class KindOfPeopleTest {
 
     @Test
     void colorSearchTwo() {
-        final Input input = InputFactory.get(in("/kindofpeople-2.txt"));
-        final ColorSearch search = new ColorSearch(input);
+        final KindOfPeople.Input input = KindOfPeople.InputFactory.get(in("/kindofpeople-2.txt"));
+        final KindOfPeople.ColorSearch search = new KindOfPeople.ColorSearch(input);
 
         assertTrue(search.binary(input, input.queries[0]));
         assertFalse(search.decimal(input, input.queries[0]));
