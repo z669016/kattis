@@ -3,10 +3,11 @@ package com.putoet.kattis;
 import java.io.InputStream;
 import java.util.Objects;
 
-public class OneDFrogger {
+public class OneDFroggerEasy {
     public static void main(String[] args) {
-        final OneDFrogger.Input input = OneDFrogger.InputFactory.get(System.in);
-        final Fate fate = OneDFrogger.play(input.s, input.m, input.squares);
+        final OneDFroggerEasy.Input input = OneDFroggerEasy.InputFactory.get(System.in);
+
+        final Fate fate = play(input.s, input.m, input.squares);
         System.out.println(fate.fate);
         System.out.println(fate.hops);
     }
